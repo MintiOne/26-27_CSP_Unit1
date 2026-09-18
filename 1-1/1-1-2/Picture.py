@@ -18,12 +18,43 @@ class Position:
             self.z += pos.z
         return self
 
+def dist(position1, position2):
+    dist = np.cbrt((position1.x - position2.x)**2 + (position1.y - position2.y)**2+(position1.z - position2.z)**2)
+    xy = np.sqrt((position1.x - position2.x) ** 2 + (position1.y - position2.y) ** 2)
+    xz = np.sqrt((position1.x - position2.x) ** 2 + (position1.z - position2.z) ** 2)
+    yz = np.sqrt((position1.z - position2.z) ** 2 + (position1.y - position2.y) ** 2)
+    return dist, xy, xz, yz
+
 
 class Rotation():
     def __init__(self, x=0, y=0, z=0):
         self.x = x
         self.y = y
         self.z = z
+    @staticmethod
+    def rotate(position, origin, rotation):
+        temp, xy, xz, yz = dist(position, origin)
+        rotation.x = np.deg2rad(rotation.x)
+        rotation.y = np.deg2rad(rotation.y)
+        rotation.z = np.deg2rad(rotation.z)
+        position.x = origin.x + np.cos(rotation.y + np.atan2(position.z-origin.z, position.x-origin.x)) * xz
+        position.z = origin.z + np.sin(rotation.y + np.atan2(position.z - origin.z, position.x - origin.x)) * xz
+
+        position.y = origin.y + np.cos(rotation.x + np.atan2(position.y - origin.y, position.z - origin.z)) * yz
+        position.z = origin.z + np.sin(rotation.x + np.atan2(position.y - origin.y, position.z - origin.z)) * yz
+
+        position.x = origin.x + np.cos(rotation.z + np.atan2(position.x - origin.x, position.y - origin.y)) * xy
+        position.y = origin.y + np.sin(rotation.z + np.atan2(position.y - origin.y, position.y - origin.y)) * xy
+
+        return position
+    def add(self, rotation):
+        rotation.x = np.deg2rad(rotation.x)
+        rotation.y = np.deg2rad(rotation.y)
+        rotation.z = np.deg2rad(rotation.z)
+        self.x += rotation.x
+        self.y += rotation.y
+        self.z += rotation.z
+        return self
 
 class camera():
     def __init__(self, position=Position(), rotation=Rotation()):
@@ -45,11 +76,8 @@ class point():
         temp_x = (self.position.x - cam.position.x)
         temp_y = (self.position.y - cam.position.y)
         temp_z = (self.position.z - cam.position.z)
-        temp_dist = np.sqrt((temp_x ** 2) + (temp_y ** 2))
-        #temp_angle = np.arctan2(temp_y, temp_x)
-        #temp_x_2 = np.cos(cam.rotation.z+temp_angle)*temp_dist
-        #temp_y_2 = np.sin(cam.rotation.z + temp_angle) * temp_dist
         if temp_z == 0:
+            print("0")
             self.proj_x = 0
             self.proj_y = 0
         else:
@@ -127,9 +155,18 @@ class plane:
         for i in range(4):
             self.points.append(point())
     def draw(self, cam):
+        self.points[0].position = Position(self.position.x - self.width, self.position.y - self.height, self.position.z)
+        self.points[1].position = Position(self.position.x + self.width, self.position.y - self.height, self.position.z)
+        self.points[2].position = Position(self.position.x + self.width, self.position.y + self.height, self.position.z)
+        self.points[3].position = Position(self.position.x - self.width, self.position.y + self.height, self.position.z)
+        self.points[0].position = Rotation.rotate(self.points[0].position, self.position, self.rotation)
+        self.points[1].position = Rotation.rotate(self.points[1].position, self.position, self.rotation)
+        self.points[2].position = Rotation.rotate(self.points[2].position, self.position, self.rotation)
+        self.points[3].position = Rotation.rotate(self.points[3].position, self.position, self.rotation)
         global t
+        t.penup()
         for i in range(4):
-            self.points[i].calc_pos()
+            self.points[i].calc_pos(cam)
             t.goto(self.points[i].proj_x, self.points[i].proj_y)
             t.pendown()
         t.goto(self.points[0].proj_x, self.points[0].proj_y)
@@ -142,8 +179,11 @@ class cube():
         self.width = width
         self.height = height
         self.depth = depth
-        triangles = []
-        triangles.append(triangle(Position(self.position.x - width), Position(self.position.y - height), Position(self.position.z - depth)))
+        self.planes = []
+        self.planes.append(plane(Position(self.position.x, self.position.y, self.position.z), self.rotation, self.width, self.height))
+    def draw(self, cam):
+        for i in range(len(self.planes)):
+            self.planes[i].draw(cam)
 
 
 
@@ -153,22 +193,7 @@ turtle.Screen().bgcolor("white")
 
 cam = camera(Position(0, 0, 30))
 
-p1 = point(Position(-1,-1,1))
-p2 = point(Position(1,-1,1))
-p3 = point(Position(1,1,1))
-p4 = point(Position(-1,1,1))
-p5 = point(Position(-1,-1,2))
-p6 = point(Position(1,-1,2))
-p7 = point(Position(1,1,2))
-p8 = point(Position(-1,1,2))
-tri = triangle(p1, p2, p3, size=10, fill_color="white")
-tri2 = triangle(p1, p4, p3, size=10, fill_color="white")
-tri3 = triangle(p5, p6, p7, size=10, fill_color="white")
-tri4 = triangle(p5, p8, p7, size=10, fill_color="white")
-tri5 = triangle(p2, p3, p6, size=10, fill_color="white")
-tri6 = triangle(p6, p3, p7, size=10, fill_color="white")
-tri7 = triangle(p4, p3, p7, size=10, fill_color="white")
-tri8 = triangle(p8, p3, p7, size=10, fill_color="white")
+cube1 = cube(position=Position(0,0,10), rotation=Rotation(0,0,0), width=10, height=10, depth=10)
 
 t.speed(0)
 
@@ -181,11 +206,4 @@ while True:
     screen.onkeypress(lambda: cam.move(0, -1), "Down")
     t.reset()
     screen.update()
-    tri.draw(cam)
-    tri2.draw(cam)
-    tri3.draw(cam)
-    tri4.draw(cam)
-    tri5.draw(cam)
-    tri6.draw(cam)
-    tri7.draw(cam)
-    tri8.draw(cam)
+    cube1.draw(cam)
