@@ -9,7 +9,6 @@ class Position:
         self.z = z
     def add(self, x=None, y=None, z=None, pos=None):
         temp = self
-        breakpoint()
         if pos is None:
             temp.x += x
             temp.y += y
@@ -18,7 +17,6 @@ class Position:
             temp.x += pos.x
             temp.y += pos.y
             temp.z += pos.z
-        breakpoint()
         return temp
 
 def dist(position1, position2):
@@ -38,16 +36,23 @@ class Rotation():
     def rotate(position, origin, rotation):
         temp, xy, xz, yz = dist(position, origin)
 
-        temp = position
+        temp = Position(position.x, position.y, position.z)
+        calc_rot = Rotation(0,0,0)
 
-        temp.x = origin.x + np.cos(np.deg2rad(rotation.z) + np.atan2(temp.y - origin.y, temp.x - origin.x)) * xy
-        temp.y = origin.y + np.sin(np.deg2rad(rotation.z) + np.atan2(temp.y - origin.y, temp.x - origin.x)) * xy
+        calc_rot.z = np.deg2rad(rotation.z) + np.atan2(temp.y - origin.y, temp.x - origin.x)
 
-        temp.x = origin.x + np.cos(np.deg2rad(rotation.y) + np.atan2(temp.z - origin.z, temp.x - origin.x)) * xz
-        temp.z = origin.z + np.sin(np.deg2rad(rotation.y) + np.atan2(temp.z - origin.z, temp.x - origin.x)) * xz
+        temp.x = origin.x + np.cos(calc_rot.z) * xy
+        temp.y = origin.y + np.sin(calc_rot.z) * xy
 
-        temp.y = origin.y + np.sin(np.deg2rad(rotation.x) + np.atan2(temp.y - origin.y, temp.z - origin.z)) * yz
-        temp.z = origin.z + np.cos(np.deg2rad(rotation.x) + np.atan2(temp.y - origin.y, temp.z - origin.z)) * yz
+        calc_rot.y = np.deg2rad(rotation.y) + np.atan2(temp.z - origin.z, temp.x - origin.x)
+
+        temp.x = origin.x + np.cos(calc_rot.y) * xz
+        temp.z = origin.z + np.sin(calc_rot.y) * xz
+
+        calc_rot.x = np.deg2rad(rotation.x) + np.atan2(temp.y - origin.y, temp.z - origin.z)
+
+        temp.z = origin.z + np.cos(calc_rot.x) * yz
+        temp.y = origin.y + np.sin(calc_rot.x) * yz
 
         return temp
     def add(self, rotation):
@@ -147,23 +152,22 @@ class triangle():
 
 class Plane:
     def __init__(self, position, rotation, width, height):
-        self.position = position
-        self.rotation = rotation
+        self.position = Position(position.x, position.y, position.z)
+        self.rotation = Rotation(rotation.x, rotation.y, rotation.z)
         self.width = width
         self.height = height
         self.points = []
         for i in range(4):
             self.points.append(point())
-        breakpoint()
     def draw(self, cam):
         self.points[0].position = Position(self.position.x - self.width, self.position.y - self.height, self.position.z)
         self.points[1].position = Position(self.position.x + self.width, self.position.y - self.height, self.position.z)
         self.points[2].position = Position(self.position.x + self.width, self.position.y + self.height, self.position.z)
         self.points[3].position = Position(self.position.x - self.width, self.position.y + self.height, self.position.z)
-        #self.points[0].position = Rotation.rotate(self.points[0].position, self.position, self.rotation)
-        #self.points[1].position = Rotation.rotate(self.points[1].position, self.position, self.rotation)
-        #self.points[2].position = Rotation.rotate(self.points[2].position, self.position, self.rotation)
-        #self.points[3].position = Rotation.rotate(self.points[3].position, self.position, self.rotation)
+        self.points[0].position = Rotation.rotate(self.points[0].position, self.position, self.rotation)
+        self.points[1].position = Rotation.rotate(self.points[1].position, self.position, self.rotation)
+        self.points[2].position = Rotation.rotate(self.points[2].position, self.position, self.rotation)
+        self.points[3].position = Rotation.rotate(self.points[3].position, self.position, self.rotation)
         global t
         t.penup()
         for i in range(4):
@@ -181,12 +185,12 @@ class cube():
         self.height = height
         self.depth = depth
         self.planes = []
-        self.plane1 = Plane(self.position.add(0, 0, depth), self.rotation.add(Rotation(0,0,0)), self.width, self.height)
-        self.plane2 = Plane(self.position.add(0,width, 0), self.rotation.add(Rotation(0,0,0)), self.width, self.height)
-        breakpoint()
+        self.planes.append(Plane(self.position.add(0, 0, depth), self.rotation.add(Rotation(0,90,0)), self.width, self.height))
+        self.planes.append(Plane(self.position.add(0, 0, -depth), self.rotation.add(Rotation(0, 90, 0)), self.width, self.height))
+        self.planes.append(Plane(self.position.add(width, 0, 0), self.rotation.add(Rotation(0, 90, 0)), self.width, self.height))
     def draw(self, cam):
-        self.plane1.draw(cam)
-        self.plane2.draw(cam)
+        for i in range(len(self.planes)):
+            self.planes[i].draw(cam)
 
 
 

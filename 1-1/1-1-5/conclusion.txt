@@ -1,0 +1,3 @@
+Question 1
+
+You used existing algorithms to maneuver your robot through a maze. In what ways did the algorithms help or hinder your development?

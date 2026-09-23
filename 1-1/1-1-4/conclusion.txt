@@ -1,0 +1,8 @@
+1:
+    Looping a number along a track to stay within the length of a list
+
+2:
+    Decreased complexity, increased runtime speed, better on the eyes
+
+3:
+    To lower the codes complexity and time to program
