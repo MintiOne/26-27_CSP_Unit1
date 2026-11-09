@@ -31,7 +31,7 @@ from pathlib import Path
 
 # Specify the directory and target extension
 directory_path = Path("tiles/")
-file_extension = "*.gif"  # Change to your target type (e.g., "*.jpg", "*.log")
+file_extension = "*.png"  # Change to your target type (e.g., "*.jpg", "*.log")
 
 # Find and delete matching files
 for file_path in directory_path.glob(file_extension):
