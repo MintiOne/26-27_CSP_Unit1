@@ -46,6 +46,15 @@ def draw_tile(x, y, path):
     global png_files
     global screenX
     global screenY
+    if x > (screenX + tilesizex*16):
+        return
+    elif x < (screenX - tilesizex*16):
+        return
+    else:
+        if y > (screenY + tilesizex*11):
+            return
+        elif y < (screenY - tilesizex*11):
+            return
     t.up()
     t.goto(x-screenX, y-screenY)
     t.shape(path)
@@ -54,7 +63,7 @@ def draw_screen():
     global screen
     for x in range(len(world.tiles)):
         for y in range(len(world.tiles[x])):
-            draw_tile(x*tilesizex, y*tilesizey, world.tiles[x][y])
+                draw_tile(x*tilesizex, y*tilesizey, world.tiles[x][y])
 
 def tile(name):
     global image_paths
@@ -69,8 +78,8 @@ def draw(brush):
 
 for y in range(16):
     world.tiles.append([])
-    for x in range(16):
-        world.tiles[y].append(tile("48_960.gif"))
+    for x in range(11):
+        world.tiles[y].append(tile("ground.gif"))
 
 def move_camera(x, y):
     global screenX
@@ -78,14 +87,20 @@ def move_camera(x, y):
     screenX += x
     screenY += y
 
+land = brushes.Land()
+brush = land
+
 while True:
     screen.reset()
     screen.listen()
-    screen.onkeypress(lambda: brushes.Land.cycle, "e")
-    screen.onkeypress(lambda: draw(brushes.Land.brush), "1")
+    screen.onkeypress(lambda: draw(land.brush), "e")
+    screen.onkeypress(lambda: brush.cycle(), "1")
+    screen.onkeypress(lambda: brush.cycle_color(), "2")
     screen.onkeypress(lambda: move_camera(0,10), "w")
     screen.onkeypress(lambda: move_camera(0,-10), "s")
     screen.onkeypress(lambda: move_camera(-10,0), "a")
     screen.onkeypress(lambda: move_camera(10,0), "d")
     draw_screen()
+    draw_tile(mouse_x+screenX, mouse_y+screenY, tile(land.brush))
     screen.update()
+    screen.onkeypress(lambda: print(world.tiles), "r")
