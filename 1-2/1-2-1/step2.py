@@ -7,6 +7,26 @@ import random as rand
 spot_color = 'red'
 spot_size = 10
 spot_shape = 'circle'
+spot_speed = 1.5
+
+spot_sizes = [
+    0.5,
+    0.6,
+    0.7,
+    0.8,
+    0.9,
+    1.0
+]
+
+colors = [
+    "red",
+    "green",
+    "blue",
+    "orange",
+    "yellow",
+    "purple",
+    "black"
+]
 
 score = 0
 font_setup = ("Arial", 20, "normal")
@@ -38,7 +58,14 @@ timer_writer.goto(screen_x * 0.85, screen_y * 0.75)
 def spot_clicked(x, y):
     change_position()
 def change_position():
+    global spot_speed, spot_size, spot_sizes, spot_color
+    t.speed(spot_speed)
     t.goto(rand.randint(-screen_x, screen_x), rand.randint(-screen_y, screen_y))
+    spot_speed += 0.25
+    spot_color = colors[rand.randint(0, len(colors)-1)]
+    size = spot_sizes[rand.randint(0, len(spot_sizes)-1)]*spot_size
+    t.color(spot_color)
+    t.shapesize(size, size)
     update_score()
 def update_score():
     global score
@@ -61,6 +88,8 @@ def countdown():
 
 #-----events----------------
 t.onclick(spot_clicked)
+#BEHOLD!!! the amazing color theory known as random colors! This background will please your eyes with its very easy viewing capabilities!!!
+wn.bgcolor("cyan")
 wn.ontimer(countdown, 1000)
 wn.mainloop()
 t.penup()
